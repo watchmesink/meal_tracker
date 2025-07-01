@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-utensils"></i> Meal Tracker</h1>
+        </header>
+        <nav class="top-nav">
+            <button id="todayTab" class="nav-btn active">
+                <i class="fas fa-home"></i>
+                <span>Today</span>
+            </button>
+            <button id="historyTab" class="nav-btn">
+                <i class="fas fa-history"></i>
+                <span>History</span>
+            </button>
+            <button id="propertiesTab" class="nav-btn">
+                <i class="fas fa-sliders-h"></i>
+                <span>Properties</span>
+            </button>
+                <button id="newDayBtn" class="btn btn-secondary">
+                    <i class="fas fa-calendar-plus"></i> New Day
+                </button>
+        </nav>
+
+        <main class="main-content">
+            <!-- Today Section: Add Meal, AI Breakdown, Loading, Totals, Meals -->
+            <section id="today-section" class="main-section">
+                <!-- Add Meal Section -->
+                <section class="add-meal-section">
+                    <h2>Add Meal</h2>
+                    <div class="meal-input-widget">
+                        <button id="addPhotoBtn" class="icon-btn" type="button" title="Add Photo">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <textarea 
+                            id="mealDescription" 
+                            class="meal-description-input"
+                            placeholder="Describe your meal..."
+                            autocomplete="off"
+                            rows="1"
+                        ></textarea>
+                        <button id="sendMealBtn" class="icon-btn send-btn" type="button" title="Send">
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                    </div>
+                    <input type="file" id="photoInput" accept="image/*" multiple capture="environment" class="hidden-input">
+                    <div id="photoPreviewContainer" class="photo-preview-container"></div>
+                </section>
+
+                <!-- AI Breakdown Section -->
+                <div id="aiBreakdownContainer" class="breakdown-container hidden"></div>
+
+                <!-- Loading indicator -->
+                <div id="loadingIndicator" class="loading-indicator hidden">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Analyzing food...</span>
+                </div>
+
+                <!-- Daily Totals Section -->
+                <div class="daily-totals-section">
+                    <div class="section-header">
+                        <h2>Today's Totals</h2>
+                    </div>
+                    <div id="daily-totals-content" class="daily-totals-content">
+                        <div class="total-item">
+                            <span class="total-label">Calories</span>
+                            <span id="total-calories" class="total-value">0</span>
+                            <div class="progress-bar-container"><div class="progress-bar" id="progress-calories"></div></div>
+                            <span class="progress-percent" id="percent-calories"></span>
+                        </div>
+                        <div class="total-item">
+                            <span class="total-label">Protein</span>
+                            <span id="total-protein" class="total-value">0g</span>
+                            <div class="progress-bar-container"><div class="progress-bar" id="progress-protein"></div></div>
+                            <span class="progress-percent" id="percent-protein"></span>
+                        </div>
+                        <div class="total-item">
+                            <span class="total-label">Fat</span>
+                            <span id="total-fat" class="total-value">0g</span>
+                            <div class="progress-bar-container"><div class="progress-bar" id="progress-fat"></div></div>
+                            <span class="progress-percent" id="percent-fat"></span>
+                        </div>
+                        <div class="total-item">
+                            <span class="total-label">Carbs</span>
+                            <span id="total-carbs" class="total-value">0g</span>
+                            <div class="progress-bar-container"><div class="progress-bar" id="progress-carbs"></div></div>
+                            <span class="progress-percent" id="percent-carbs"></span>
+                        </div>
+                        <div class="total-item">
+                            <span class="total-label">Fiber</span>
+                            <span id="total-fiber" class="total-value">0g</span>
+                            <div class="progress-bar-container"><div class="progress-bar" id="progress-fiber"></div></div>
+                            <span class="progress-percent" id="percent-fiber"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Meals Section -->
+                <section class="meals-section">
+                    <h2>Today's Meals</h2>
+                    <div id="todaysMeals" class="meals-list">
+                        <!-- Meals will be populated here -->
+                    </div>
+                </section>
+            </section>
+
+            <!-- Navigation -->
+            <nav class="bottom-nav">
+                <button id="todayTab" class="nav-btn active">
+                    <i class="fas fa-home"></i>
+                    <span>Today</span>
+                </button>
+                <button id="historyTab" class="nav-btn">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </button>
+            </nav>
+
+            <!-- History Section -->
+            <section id="history-section" class="main-section">
+                <div class="section-header">
+                    <h2>History</h2>
+                    <button id="clear-history-btn" class="btn btn-danger">
+                        <i class="fas fa-trash-alt"></i> Clear All History
+                    </button>
+                    <button id="exportBtn" class="btn btn-secondary">
+                        <i class="fas fa-download"></i> Export CSV
+                    </button>
+                </div>
+                <div id="history-list" class="history-list">
+                    <!-- History items will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Properties Section -->
+            <section id="properties-section" class="main-section">
+                <div class="section-header">
+                    <h2>Nutritional Goals</h2>
+                </div>
+                <form id="goalsForm" class="goals-form">
+                    <label>Calories (kcal)
+                        <input type="number" id="goalCalories" min="0" step="1" placeholder="e.g. 2000">
+                    </label>
+                    <label>Protein (g)
+                        <input type="number" id="goalProtein" min="0" step="1" placeholder="e.g. 150">
+                    </label>
+                    <label>Fat (g)
+                        <input type="number" id="goalFat" min="0" step="1" placeholder="e.g. 70">
+                    </label>
+                    <label>Carbs (g)
+                        <input type="number" id="goalCarbs" min="0" step="1" placeholder="e.g. 250">
+                    </label>
+                    <label>Fiber (g)
+                        <input type="number" id="goalFiber" min="0" step="1" placeholder="e.g. 30">
+                    </label>
+                    <button type="submit" class="btn btn-primary">Save Goals</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div id="messageContainer" class="message-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
