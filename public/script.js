@@ -25,6 +25,11 @@ function formatNumber(num) {
     return Math.round(num * 10) / 10;
 }
 
+function formatTotal(num) {
+    // Format number with comma as decimal separator and no unit suffix
+    return (Math.round(num * 10) / 10).toLocaleString('de-DE');
+}
+
 function formatDate(dateString) {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -245,6 +250,7 @@ async function clearHistory() {
 }
 
 // UI Functions
+let lastTotalsData = null;
 function updateTodaysTotals(data) {
     lastTotalsData = data;
     const goals = JSON.parse(localStorage.getItem('nutritionGoals') || '{}');
@@ -253,11 +259,11 @@ function updateTodaysTotals(data) {
         return Math.round((val/goal)*100);
     }
     // Set values
-    elements.totalCalories.textContent = data.totals.total_calories;
-    elements.totalProtein.textContent = data.totals.total_protein + 'g';
-    elements.totalFat.textContent = data.totals.total_fat + 'g';
-    elements.totalCarbs.textContent = data.totals.total_carbs + 'g';
-    elements.totalFiber.textContent = data.totals.total_fiber + 'g';
+    elements.totalCalories.textContent = formatTotal(data.totals.total_calories);
+    elements.totalProtein.textContent = formatTotal(data.totals.total_protein);
+    elements.totalFat.textContent = formatTotal(data.totals.total_fat);
+    elements.totalCarbs.textContent = formatTotal(data.totals.total_carbs);
+    elements.totalFiber.textContent = formatTotal(data.totals.total_fiber);
     // Set progress bars and percent labels
     const progressData = [
         {val: data.totals.total_calories, goal: goals.calories, bar: 'progress-calories', percent: 'percent-calories'},
@@ -1014,37 +1020,6 @@ function saveGoals() {
     };
     localStorage.setItem('nutritionGoals', JSON.stringify(goals));
     updateTodaysTotals(lastTotalsData);
-}
-
-let lastTotalsData = null;
-function updateTodaysTotals(data) {
-    lastTotalsData = data;
-    const goals = JSON.parse(localStorage.getItem('nutritionGoals') || '{}');
-    function pct(val, goal) {
-        if (!goal || goal <= 0) return 0;
-        return Math.round((val/goal)*100);
-    }
-    // Set values
-    elements.totalCalories.textContent = data.totals.total_calories;
-    elements.totalProtein.textContent = data.totals.total_protein + 'g';
-    elements.totalFat.textContent = data.totals.total_fat + 'g';
-    elements.totalCarbs.textContent = data.totals.total_carbs + 'g';
-    elements.totalFiber.textContent = data.totals.total_fiber + 'g';
-    // Set progress bars and percent labels
-    const progressData = [
-        {val: data.totals.total_calories, goal: goals.calories, bar: 'progress-calories', percent: 'percent-calories'},
-        {val: data.totals.total_protein, goal: goals.protein, bar: 'progress-protein', percent: 'percent-protein'},
-        {val: data.totals.total_fat, goal: goals.fat, bar: 'progress-fat', percent: 'percent-fat'},
-        {val: data.totals.total_carbs, goal: goals.carbs, bar: 'progress-carbs', percent: 'percent-carbs'},
-        {val: data.totals.total_fiber, goal: goals.fiber, bar: 'progress-fiber', percent: 'percent-fiber'}
-    ];
-    progressData.forEach(({val, goal, bar, percent}) => {
-        const percentVal = pct(val, goal);
-        const barEl = document.getElementById(bar);
-        const percentEl = document.getElementById(percent);
-        if (barEl) barEl.style.width = Math.min(percentVal, 100) + '%';
-        if (percentEl) percentEl.textContent = (goal && goal > 0) ? percentVal + '% completed' : '0% completed';
-    });
 }
 
 function navigateTo(page) {
