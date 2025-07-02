@@ -759,6 +759,9 @@ app.get('/api/nutritionist/today', requireAuth, async (req, res) => {
   try {
     const date = getCurrentDate();
     
+    // Get user's timezone from query parameter or default to UTC
+    const userTimezone = req.query.timezone || 'UTC';
+    
     // Get today's meals and totals
     const meals = await new Promise((resolve, reject) => {
       db.all(`SELECT * FROM meals WHERE user_id = ? AND date = ? ORDER BY created_at DESC`, [req.user.id, date], (err, rows) => {
@@ -780,16 +783,19 @@ app.get('/api/nutritionist/today', requireAuth, async (req, res) => {
       });
     });
     
-    // Calculate timing context (used for both no-meals and full analysis)
+    // Calculate timing context using user's timezone
     const now = new Date();
     const currentTime = now.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit',
       hour12: false,
-      timeZone: 'America/New_York'
+      timeZone: userTimezone
     });
-    const currentHour = now.getHours();
-    const currentMinutes = now.getMinutes();
+    
+    // Get current hour and minutes in user's timezone
+    const userNow = new Date(now.toLocaleString('en-US', { timeZone: userTimezone }));
+    const currentHour = userNow.getHours();
+    const currentMinutes = userNow.getMinutes();
     const dayProgress = Math.round(((currentHour * 60 + currentMinutes) / (24 * 60)) * 100);
     
     // Determine day phase
@@ -838,7 +844,8 @@ app.get('/api/nutritionist/today', requireAuth, async (req, res) => {
       const time = meal.created_at ? new Date(meal.created_at).toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit',
-        hour12: false 
+        hour12: false,
+        timeZone: userTimezone
       }) : 'Unknown time';
       return `${index + 1}. ${time} - ${meal.description} (${meal.calories}cal, ${meal.protein}g protein, ${meal.fat}g fat, ${meal.carbs}g carbs, ${meal.fiber}g fiber)`;
     }).join('\n');
@@ -849,7 +856,8 @@ app.get('/api/nutritionist/today', requireAuth, async (req, res) => {
       new Date(lastMeal.created_at).toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit',
-        hour12: false 
+        hour12: false,
+        timeZone: userTimezone
       }) : 'No meals yet';
     
     // Prepare the prompt with timing context

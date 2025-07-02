@@ -650,7 +650,8 @@ async function loadTodaysData() {
 
 // Nutritionist Analysis Functions
 async function getNutritionistAnalysis() {
-    return await apiRequest('/api/nutritionist/today');
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return await apiRequest(`/api/nutritionist/today?timezone=${encodeURIComponent(userTimezone)}`);
 }
 
 async function loadNutritionistAnalysis() {

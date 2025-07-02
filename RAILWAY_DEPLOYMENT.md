@@ -105,15 +105,19 @@ Railway automatically handles:
 
 ## 🌍 Environment Variables Needed
 
+⚠️ **CRITICAL**: The app will **CRASH ON STARTUP** if Google OAuth environment variables are missing!
+
 | Variable | Description | Required | Example |
 |----------|-------------|----------|---------|
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID | 🚨 **REQUIRED** | `123-abc.apps.googleusercontent.com` |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret | 🚨 **REQUIRED** | `GOCSPX-abcdef123` |
+| `SESSION_SECRET` | Secure random string (32+ chars) | 🚨 **REQUIRED** | `your-random-secret-at-least-32-chars` |
 | `GEMINI_API_KEY` | Google Gemini AI API key | ✅ Yes | `AIza...` |
-| `GOOGLE_CLIENT_ID` | Google OAuth Client ID | ✅ Yes | `123-abc.apps.googleusercontent.com` |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret | ✅ Yes | `GOCSPX-abcdef123` |
-| `SESSION_SECRET` | Secure random string for sessions | ✅ Yes | `your-random-secret` |
 | `BASE_URL` | Your Railway app URL | ✅ Yes | `https://your-app.railway.app` |
 | `NODE_ENV` | Set to "production" | ✅ Yes | `production` |
 | `PORT` | App port (auto-set by Railway) | ⚠️ Auto | `3000` |
+
+**⚠️ ERROR MESSAGE**: If you see `TypeError: OAuth2Strategy requires a clientID option`, it means `GOOGLE_CLIENT_ID` or `GOOGLE_CLIENT_SECRET` are missing!
 
 ## 🔍 Post-Deployment Testing
 
@@ -135,6 +139,16 @@ After deployment, test these features:
 - Check Railway build logs
 
 ### App Won't Start
+
+**OAuth2Strategy Error** (most common issue):
+```
+TypeError: OAuth2Strategy requires a clientID option
+```
+- **Solution**: Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in Railway Variables tab
+- **Check**: Variables tab in Railway dashboard shows these are set and not empty
+- **Note**: Railway variables are case-sensitive!
+
+**Other startup issues**:
 - Verify `GEMINI_API_KEY` is set correctly
 - Check that port is configured: `process.env.PORT || 3000`
 - Review Railway deployment logs
