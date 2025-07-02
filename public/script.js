@@ -777,6 +777,14 @@ window.addEventListener('DOMContentLoaded', () => {
             saveGoals();
             showMessage('Goals saved!');
         });
+        
+        // Add real-time calorie calculation when macros change
+        [elements.goalProtein, elements.goalFat, elements.goalCarbs].forEach(input => {
+            if (input) {
+                input.addEventListener('input', calculateCaloriesFromMacros);
+                input.addEventListener('change', calculateCaloriesFromMacros);
+            }
+        });
     }
 });
 
@@ -870,18 +878,36 @@ function switchTab(tab) {
     }
 }
 
+// Calculate calories from macronutrients
+function calculateCaloriesFromMacros() {
+    const protein = Number(elements.goalProtein.value) || 0;
+    const fat = Number(elements.goalFat.value) || 0;
+    const carbs = Number(elements.goalCarbs.value) || 0;
+    
+    // Calories = (Protein × 4) + (Fat × 9) + (Carbs × 4)
+    const calories = Math.round((protein * 4) + (fat * 9) + (carbs * 4));
+    
+    elements.goalCalories.value = calories;
+    return calories;
+}
+
 function loadGoals() {
     const goals = JSON.parse(localStorage.getItem('nutritionGoals') || '{}');
-    elements.goalCalories.value = goals.calories || '';
     elements.goalProtein.value = goals.protein || '';
     elements.goalFat.value = goals.fat || '';
     elements.goalCarbs.value = goals.carbs || '';
     elements.goalFiber.value = goals.fiber || '';
+    
+    // Calculate calories from macros
+    calculateCaloriesFromMacros();
 }
 
 function saveGoals() {
+    // Calculate calories automatically from macros
+    const calculatedCalories = calculateCaloriesFromMacros();
+    
     const goals = {
-        calories: Number(elements.goalCalories.value) || 0,
+        calories: calculatedCalories,
         protein: Number(elements.goalProtein.value) || 0,
         fat: Number(elements.goalFat.value) || 0,
         carbs: Number(elements.goalCarbs.value) || 0,

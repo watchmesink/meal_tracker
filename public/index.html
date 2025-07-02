@@ -147,8 +147,8 @@
                     <h2>Nutritional Goals</h2>
                 </div>
                 <form id="goalsForm" class="goals-form">
-                    <label>Calories (kcal)
-                        <input type="number" id="goalCalories" min="0" step="1" placeholder="e.g. 2000">
+                    <label>Calories (kcal) <span class="auto-calc-note">Auto-calculated</span>
+                        <input type="number" id="goalCalories" min="0" step="1" placeholder="Auto-calculated from macros" readonly>
                     </label>
                     <label>Protein (g)
                         <input type="number" id="goalProtein" min="0" step="1" placeholder="e.g. 150">
@@ -162,6 +162,9 @@
                     <label>Fiber (g)
                         <input type="number" id="goalFiber" min="0" step="1" placeholder="e.g. 30">
                     </label>
+                    <div class="macro-formula">
+                        <small>Calories = (Protein × 4) + (Fat × 9) + (Carbs × 4)</small>
+                    </div>
                     <button type="submit" class="btn btn-primary">Save Goals</button>
                 </form>
             </section>
