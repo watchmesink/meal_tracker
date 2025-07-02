@@ -30,20 +30,42 @@ This guide will help you deploy your meal tracker app to Railway, a modern cloud
    - Choose your `meal_tracker` repository
    - Railway will automatically detect it's a Node.js app
 
-4. **Configure Environment Variables**:
-   - Go to your project dashboard
-   - Click on the "Variables" tab
-   - Add these **REQUIRED** variables:
-     ```
-     GEMINI_API_KEY=your_actual_gemini_api_key
-     GOOGLE_CLIENT_ID=your_google_client_id
-     GOOGLE_CLIENT_SECRET=your_google_client_secret
-     SESSION_SECRET=your_secure_random_session_secret
-     BASE_URL=https://your-app-name.railway.app
-     NODE_ENV=production
-     ```
-   - Railway automatically sets `PORT` for you
-   - ⚠️ **IMPORTANT**: Set `BASE_URL` to your actual Railway app URL
+4. **Configure Environment Variables** (CRITICAL STEP):
+   
+   ⚠️ **BEFORE DEPLOYING**: Check your environment variables locally:
+   ```bash
+   npm run check-env
+   ```
+   
+   - Go to your Railway project dashboard
+   - Click on the **"Variables"** tab
+   - Add these **REQUIRED** variables **ONE BY ONE**:
+   
+   **Step 4a: Add Google OAuth Variables (CRITICAL)**
+   ```
+   Variable Name: GOOGLE_CLIENT_ID
+   Value: your_google_client_id_ending_with_.apps.googleusercontent.com
+   
+   Variable Name: GOOGLE_CLIENT_SECRET  
+   Value: your_google_client_secret_starting_with_GOCSPX-
+   
+   Variable Name: SESSION_SECRET
+   Value: a_random_string_at_least_32_characters_long
+   ```
+   
+   **Step 4b: Add Other Required Variables**
+   ```
+   Variable Name: GEMINI_API_KEY
+   Value: your_actual_gemini_api_key_starting_with_AIza
+   
+   Variable Name: BASE_URL
+   Value: https://your-app-name.railway.app
+   
+   Variable Name: NODE_ENV
+   Value: production
+   ```
+   
+   ⚠️ **CRITICAL**: Click "Add" after each variable. Railway won't deploy without Google OAuth variables!
 
 5. **Deploy**:
    - Railway will automatically build and deploy your app
@@ -118,6 +140,38 @@ Railway automatically handles:
 | `PORT` | App port (auto-set by Railway) | ⚠️ Auto | `3000` |
 
 **⚠️ ERROR MESSAGE**: If you see `TypeError: OAuth2Strategy requires a clientID option`, it means `GOOGLE_CLIENT_ID` or `GOOGLE_CLIENT_SECRET` are missing!
+
+## 📋 Railway Deployment Logs - What to Expect
+
+### ✅ Successful Deployment (Environment Variables Set):
+```
+🔍 Checking Google OAuth environment variables...
+GOOGLE_CLIENT_ID: ✅ Set
+GOOGLE_CLIENT_SECRET: ✅ Set  
+SESSION_SECRET: ✅ Set
+BASE_URL: https://your-app.railway.app
+✅ Custom AI system prompt loaded from system_prompt.md
+✅ Nutritionist analysis prompt loaded from nutritionist_prompt.md
+🗄️ Database initialized successfully
+🚀 Server is running on port 3000
+```
+
+### ❌ Failed Deployment (Environment Variables Missing):
+```
+🔍 Checking Google OAuth environment variables...
+GOOGLE_CLIENT_ID: ❌ Missing
+GOOGLE_CLIENT_SECRET: ❌ Missing
+❌ CRITICAL ERROR: Google OAuth environment variables are missing!
+Required variables:
+- GOOGLE_CLIENT_ID (currently: undefined )
+- GOOGLE_CLIENT_SECRET (currently: undefined )
+
+🔧 To fix this:
+1. Go to Railway Dashboard > Your Project > Variables
+2. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
+3. Get these from Google Cloud Console (see GOOGLE_OAUTH_SETUP.md)
+4. Redeploy the application
+```
 
 ## 🔍 Post-Deployment Testing
 

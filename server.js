@@ -75,6 +75,27 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Check Google OAuth environment variables
+console.log('🔍 Checking Google OAuth environment variables...');
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing');
+console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? '✅ Set' : '❌ Missing');
+console.log('SESSION_SECRET:', process.env.SESSION_SECRET ? '✅ Set' : '❌ Missing');
+console.log('BASE_URL:', process.env.BASE_URL || 'http://localhost:3000');
+
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+  console.error('❌ CRITICAL ERROR: Google OAuth environment variables are missing!');
+  console.error('Required variables:');
+  console.error('- GOOGLE_CLIENT_ID (currently:', process.env.GOOGLE_CLIENT_ID || 'undefined', ')');
+  console.error('- GOOGLE_CLIENT_SECRET (currently:', process.env.GOOGLE_CLIENT_SECRET || 'undefined', ')');
+  console.error('');
+  console.error('🔧 To fix this:');
+  console.error('1. Go to Railway Dashboard > Your Project > Variables');
+  console.error('2. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET');
+  console.error('3. Get these from Google Cloud Console (see GOOGLE_OAUTH_SETUP.md)');
+  console.error('4. Redeploy the application');
+  process.exit(1);
+}
+
 // Google OAuth Strategy
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,

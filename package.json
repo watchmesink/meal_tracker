@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "check-env": "node scripts/check-env.js",
+    "pre-deploy": "npm run check-env"
   },
   "dependencies": {
     "@google-cloud/speech": "^7.1.0",
