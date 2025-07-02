@@ -6,7 +6,7 @@
     <title>Meal Tracker</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 </head>
 <body>
     <div class="container">
@@ -14,24 +14,21 @@
         <div id="main-app">
             <header class="header">
                 <div class="header-left">
-                    <h1><i class="fas fa-utensils"></i> Meal Tracker</h1>
+                    <h1>Meal Tracker</h1>
                 </div>
             </header>
         <nav class="top-nav">
             <button id="todayTab" class="nav-btn active">
-                <i class="fas fa-home"></i>
                 <span>Today</span>
             </button>
             <button id="historyTab" class="nav-btn">
-                <i class="fas fa-history"></i>
                 <span>History</span>
             </button>
             <button id="propertiesTab" class="nav-btn">
-                <i class="fas fa-sliders-h"></i>
                 <span>Properties</span>
             </button>
                 <button id="newDayBtn" class="btn btn-secondary">
-                    <i class="fas fa-calendar-plus"></i> New Day
+                    New Day
                 </button>
         </nav>
 
@@ -43,7 +40,7 @@
                     <h2>Add Meal</h2>
                     <div class="meal-input-widget">
                         <button id="addPhotoBtn" class="icon-btn" type="button" title="Add Photo">
-                            <i class="fas fa-plus"></i>
+                            +
                         </button>
                         <textarea 
                             id="mealDescription" 
@@ -52,12 +49,17 @@
                             autocomplete="off"
                             rows="1"
                         ></textarea>
-                        <button id="sendMealBtn" class="icon-btn send-btn" type="button" title="Send">
-                            <i class="fas fa-arrow-up"></i>
-                        </button>
                     </div>
                     <input type="file" id="photoInput" accept="image/*" multiple capture="environment" class="hidden-input">
                     <div id="photoPreviewContainer" class="photo-preview-container"></div>
+                    <div class="send-button-container">
+                        <button id="addPhotosBtn" class="btn btn-secondary" type="button">
+                            Photos
+                        </button>
+                        <button id="sendMealBtn" class="btn btn-primary" type="button">
+                            Add Meal
+                        </button>
+                    </div>
                 </section>
 
                 <!-- AI Breakdown Section -->
@@ -65,21 +67,19 @@
 
                 <!-- Loading indicator -->
                 <div id="loadingIndicator" class="loading-indicator hidden">
-                    <i class="fas fa-spinner fa-spin"></i>
                     <span>Analyzing food...</span>
                 </div>
 
                 <!-- AI Nutritionist Analysis Section -->
                 <div id="nutritionist-analysis-section" class="nutritionist-analysis-section">
                     <div class="section-header">
-                        <h2><i class="fas fa-user-md"></i> AI Nutritionist Analysis</h2>
+                        <h2>AI Nutritionist Analysis</h2>
                         <button id="refreshAnalysisBtn" class="btn btn-secondary btn-small" title="Refresh Analysis">
-                            <i class="fas fa-sync-alt"></i>
+                            Refresh
                         </button>
                     </div>
                     <div id="nutritionist-analysis-content" class="nutritionist-analysis-content">
                         <div id="nutritionist-loading" class="nutritionist-loading hidden">
-                            <i class="fas fa-brain fa-pulse"></i>
                             <span>Analyzing your nutrition...</span>
                         </div>
                         <div id="nutritionist-analysis-text" class="nutritionist-analysis-text">
@@ -139,11 +139,9 @@
             <!-- Navigation -->
             <nav class="bottom-nav">
                 <button id="todayTab" class="nav-btn active">
-                    <i class="fas fa-home"></i>
                     <span>Today</span>
                 </button>
                 <button id="historyTab" class="nav-btn">
-                    <i class="fas fa-history"></i>
                     <span>History</span>
                 </button>
             </nav>
@@ -153,10 +151,10 @@
                 <div class="section-header">
                     <h2>History</h2>
                     <button id="clear-history-btn" class="btn btn-danger">
-                        <i class="fas fa-trash-alt"></i> Clear All History
+                        Clear All History
                     </button>
                     <button id="exportBtn" class="btn btn-secondary">
-                        <i class="fas fa-download"></i> Export CSV
+                        Export CSV
                     </button>
                 </div>
                 <div id="history-list" class="history-list">

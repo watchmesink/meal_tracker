@@ -76,7 +76,7 @@ function addPhotoPreview(file) {
     
     const removeBtn = document.createElement('button');
     removeBtn.className = 'photo-remove-btn';
-    removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    removeBtn.innerHTML = '×';
     removeBtn.onclick = () => removePhoto(file, previewItem);
     
     previewItem.appendChild(img);
@@ -770,6 +770,7 @@ window.addEventListener('DOMContentLoaded', () => {
     elements = {
         mealDescription: document.getElementById('mealDescription'),
         addPhotoBtn: document.getElementById('addPhotoBtn'),
+        addPhotosBtn: document.getElementById('addPhotosBtn'),
         photoInput: document.getElementById('photoInput'),
         photoPreviewContainer: document.getElementById('photoPreviewContainer'),
         sendMealBtn: document.getElementById('sendMealBtn'),
@@ -815,6 +816,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if (elements.addPhotoBtn && elements.photoInput) {
         elements.addPhotoBtn.addEventListener('click', () => elements.photoInput.click());
     elements.photoInput.addEventListener('change', handlePhotoInput);
+    }
+    
+    // Photos button also triggers image upload
+    if (elements.addPhotosBtn && elements.photoInput) {
+        elements.addPhotosBtn.addEventListener('click', () => elements.photoInput.click());
     }
 
     // Send icon submits meal
