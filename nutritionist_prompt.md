@@ -35,10 +35,18 @@ Adjust your analysis tone and focus based on timing:
 **Individual Meals:** {{meals}}
 
 ## Response Format:
-Provide a structured analysis covering:
-- **Quick Summary:** Overall assessment considering time of day (1-2 sentences)
-- **Strengths:** What you did well nutritionally
-- **Areas for Improvement:** Specific concerns and time-appropriate recommendations
-- **Next Steps:** Suggestions for remaining meals today OR tomorrow's focus (depending on time)
+Provide a structured analysis using bullet points covering:
 
-Focus on being helpful and educational rather than judgmental, with guidance appropriate for the time remaining in the day. 
+**Quick Summary:**
+• Overall assessment considering time of day (1-2 bullet points)
+
+**Strengths:**
+• What you did well nutritionally (bullet points)
+
+**Areas for Improvement:**
+• Specific concerns and time-appropriate recommendations (bullet points)
+
+**Next Steps:**
+• Suggestions for remaining meals today OR tomorrow's focus (bullet points)
+
+Focus on being helpful and educational rather than judgmental, with guidance appropriate for the time remaining in the day. Use bullet points throughout for easy scanning. 

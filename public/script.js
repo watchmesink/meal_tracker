@@ -147,12 +147,20 @@ function handlePhotoInput() {
 async function apiRequest(url, options = {}) {
     try {
         const response = await fetch(url, {
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
                 ...options.headers
             },
             ...options
         });
+        
+        // Handle authentication errors
+        if (response.status === 401) {
+            showMessage('Please log in to continue', 'error');
+            showLoginSection();
+            throw new Error('Authentication required');
+        }
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -672,16 +680,16 @@ async function loadNutritionistAnalysis() {
             // Wrap consecutive list items in ul tags
             formattedAnalysis = formattedAnalysis.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
             
-            // Add timing context footer if available
-            if (result.timing_context) {
-                const timingInfo = `<div class="analysis-timing">
-                    <small><i class="fas fa-clock"></i> Analysis at ${result.timing_context.current_time} 
-                    ${result.timing_context.last_meal_time !== 'No meals yet' ? 
-                        `• Last meal: ${result.timing_context.last_meal_time}` : ''}
-                    • ${Math.round(result.timing_context.day_progress)}% of day passed</small>
-                </div>`;
-                formattedAnalysis += timingInfo;
-            }
+            // Timing context hidden per user request
+            // if (result.timing_context) {
+            //     const timingInfo = `<div class="analysis-timing">
+            //         <small><i class="fas fa-clock"></i> Analysis at ${result.timing_context.current_time} 
+            //         ${result.timing_context.last_meal_time !== 'No meals yet' ? 
+            //             `• Last meal: ${result.timing_context.last_meal_time}` : ''}
+            //         • ${Math.round(result.timing_context.day_progress)}% of day passed</small>
+            //     </div>`;
+            //     formattedAnalysis += timingInfo;
+            // }
             
             analysisText.innerHTML = formattedAnalysis;
         } else {
@@ -742,8 +750,77 @@ async function setVectorDbMode(enabled) {
     } catch (e) { console.error('Failed to set vector DB mode', e); }
 }
 
+// Global variables for authentication
+let currentUser = null;
+
+// Check authentication status on page load
+async function checkAuthenticationStatus() {
+    try {
+        const response = await fetch('/auth/status', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.authenticated && data.user) {
+            currentUser = data.user;
+            showMainApp();
+            initializeApp();
+        } else {
+            showLoginSection();
+        }
+    } catch (error) {
+        console.error('Error checking authentication:', error);
+        showLoginSection();
+    }
+}
+
+// Show main app (authenticated state)
+function showMainApp() {
+    document.getElementById('login-section').classList.add('hidden');
+    document.getElementById('main-app').classList.remove('hidden');
+    
+    // Update user info in header
+    if (currentUser) {
+        document.getElementById('userAvatar').src = currentUser.picture || '';
+        document.getElementById('userName').textContent = currentUser.name || '';
+    }
+}
+
+// Show login section (unauthenticated state)
+function showLoginSection() {
+    document.getElementById('login-section').classList.remove('hidden');
+    document.getElementById('main-app').classList.add('hidden');
+}
+
+// Handle logout
+async function handleLogout() {
+    try {
+        await fetch('/auth/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+        currentUser = null;
+        showLoginSection();
+        showMessage('Logged out successfully');
+    } catch (error) {
+        console.error('Error logging out:', error);
+        showMessage('Error logging out', 'error');
+    }
+}
+
+// Initialize the main app after authentication
+function initializeApp() {
+    // Initial data load
+    loadTodaysData();
+    loadHistory();
+    loadGoals();
+}
+
 // Event Listeners
 window.addEventListener('DOMContentLoaded', () => {
+    // Check authentication first
+    checkAuthenticationStatus();
+
     elements = {
         mealDescription: document.getElementById('mealDescription'),
         addPhotoBtn: document.getElementById('addPhotoBtn'),
@@ -818,6 +895,12 @@ window.addEventListener('DOMContentLoaded', () => {
     elements.exportBtn.addEventListener('click', handleExportCSV);
     elements.clearHistoryBtn.addEventListener('click', handleClearHistory);
     
+    // Authentication
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+    
     // Nutritionist analysis refresh button
     const refreshAnalysisBtn = document.getElementById('refreshAnalysisBtn');
     if (refreshAnalysisBtn) {
@@ -838,9 +921,6 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // Initial state
     updateSubmitButton();
-    
-    // Initial data load
-    loadTodaysData();
 
     // Handle browser navigation (back/forward)
     window.addEventListener('popstate', () => {
