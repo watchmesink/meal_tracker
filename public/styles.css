@@ -195,14 +195,14 @@ section h2 {
 
 .meal-description-input {
     flex: 1 1 auto;
-    min-height: 50px;
+    min-height: 40px;
     max-height: 120px;
     border: none;
     outline: none;
     background: #f7f7fa;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     border-radius: 1.5rem;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem;
     resize: vertical;
     overflow-y: auto;
     box-shadow: 0 0 0 2px #dbeafe;
@@ -1094,14 +1094,14 @@ section h2 {
 }
 .meal-description-input {
     flex: 1 1 auto;
-    min-height: 54px;
+    min-height: 44px;
     max-height: 120px;
     border: none;
     outline: none;
     background: #f7f7fa;
-    font-size: 0.95rem;
+    font-size: 1.15rem;
     border-radius: 1.5rem;
-    padding: 1rem 1.2rem;
+    padding: 0.8rem 1.2rem;
     resize: vertical;
     overflow-y: auto;
     box-shadow: 0 0 0 2px #dbeafe;
@@ -1223,9 +1223,9 @@ section h2 {
         border-radius: 8px;
     }
     .meal-edit-form textarea.meal-description-input {
-        font-size: 0.9rem;
-        min-height: 42px;
-        padding: 0.6rem 0.8rem;
+        font-size: 1rem;
+        min-height: 32px;
+        padding: 0.4rem 0.7rem;
         border-radius: 8px;
     }
     .meal-edit-form input[type="number"] {
@@ -1417,6 +1417,130 @@ section h2 {
     font-weight: 600;
 }
 
+/* Nutritionist Analysis Section */
+.nutritionist-analysis-section {
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+    border: 1px solid #e1e8ff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 12px rgba(0, 122, 255, 0.08);
+}
+
+.nutritionist-analysis-section .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.nutritionist-analysis-section .section-header h2 {
+    color: #1d1d1f;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nutritionist-analysis-section .section-header h2 i {
+    color: #007aff;
+    font-size: 1.1rem;
+}
+
+.btn-small {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    min-width: auto;
+}
+
+.nutritionist-analysis-content {
+    position: relative;
+    min-height: 60px;
+}
+
+.nutritionist-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    color: #007aff;
+    font-weight: 500;
+}
+
+.nutritionist-loading i {
+    font-size: 1.25rem;
+    color: #007aff;
+}
+
+.nutritionist-analysis-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #1d1d1f;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.nutritionist-analysis-text h3,
+.nutritionist-analysis-text h4,
+.nutritionist-analysis-text strong {
+    color: #1d1d1f;
+    font-weight: 600;
+}
+
+.nutritionist-analysis-text h3 {
+    font-size: 1.1rem;
+    margin: 1rem 0 0.5rem 0;
+}
+
+.nutritionist-analysis-text h4 {
+    font-size: 1rem;
+    margin: 0.75rem 0 0.25rem 0;
+}
+
+.nutritionist-analysis-text p {
+    margin: 0.5rem 0;
+}
+
+.nutritionist-analysis-text ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.nutritionist-analysis-text li {
+    margin: 0.25rem 0;
+}
+
+/* Mobile responsive styling for nutritionist analysis */
+@media (max-width: 600px) {
+    .nutritionist-analysis-section {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 12px;
+    }
+    
+    .nutritionist-analysis-section .section-header h2 {
+        font-size: 1.1rem;
+    }
+    
+    .btn-small {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .nutritionist-analysis-text {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    .nutritionist-loading {
+        padding: 1rem;
+        gap: 0.5rem;
+    }
+}
+
 /* Progress Bar Styles */
 .progress-bar-container {
     width: 100%;
@@ -1556,8 +1680,8 @@ section h2 {
         min-height: 40px;
     }
     .meal-description-input {
-        font-size: 0.9rem;
-        min-height: 46px;
-        padding: 0.7rem 0.7rem;
+        font-size: 1rem;
+        min-height: 36px;
+        padding: 0.5rem 0.5rem;
     }
 } 

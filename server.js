@@ -28,6 +28,20 @@ try {
   Provide the response in a strict JSON format with "total_nutrition" and "ingredients" keys.`;
 }
 
+// Load the nutritionist analysis prompt
+let nutritionistPrompt = '';
+try {
+  nutritionistPrompt = fs.readFileSync('nutritionist_prompt.md', 'utf-8');
+  console.log('✅ Nutritionist analysis prompt loaded from nutritionist_prompt.md');
+} catch (error) {
+  console.error('⚠️ Could not load nutritionist_prompt.md, using default fallback prompt.', error.message);
+  nutritionistPrompt = `You are a nutritionist. Analyze the daily meals and provide constructive feedback on nutrition quality, balance, and recommendations for improvement. Keep it concise and actionable.
+
+**Date:** {{date}}
+**Total Nutrition:** {{totals}}
+**Meals:** {{meals}}`;
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -544,6 +558,81 @@ app.get('/api/meals/today', (req, res) => {
       });
     });
   });
+});
+
+// Get AI nutritionist analysis for today
+app.get('/api/nutritionist/today', async (req, res) => {
+  try {
+    const date = getCurrentDate();
+    
+    // Get today's meals and totals
+    const meals = await new Promise((resolve, reject) => {
+      db.all(`SELECT * FROM meals WHERE date = ? ORDER BY created_at DESC`, [date], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+    
+    const totals = await new Promise((resolve, reject) => {
+      db.get(`SELECT * FROM daily_totals WHERE date = ?`, [date], (err, row) => {
+        if (err) reject(err);
+        else resolve(row || {
+          total_calories: 0,
+          total_protein: 0,
+          total_fat: 0,
+          total_carbs: 0,
+          total_fiber: 0
+        });
+      });
+    });
+    
+    // Skip analysis if no meals
+    if (!meals || meals.length === 0) {
+      return res.json({
+        analysis: "🍽️ **No meals logged today yet!** \n\nStart your day by logging your first meal to get personalized nutritional insights and recommendations.",
+        date,
+        meals_count: 0
+      });
+    }
+    
+    // Prepare data for AI analysis
+    const totalsText = `Calories: ${totals.total_calories || 0}, Protein: ${totals.total_protein || 0}g, Fat: ${totals.total_fat || 0}g, Carbs: ${totals.total_carbs || 0}g, Fiber: ${totals.total_fiber || 0}g`;
+    
+    const mealsText = meals.map((meal, index) => {
+      const time = meal.created_at ? new Date(meal.created_at).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      }) : 'Unknown time';
+      return `${index + 1}. ${time} - ${meal.description} (${meal.calories}cal, ${meal.protein}g protein, ${meal.fat}g fat, ${meal.carbs}g carbs, ${meal.fiber}g fiber)`;
+    }).join('\n');
+    
+    // Prepare the prompt
+    const prompt = nutritionistPrompt
+      .replace('{{date}}', date)
+      .replace('{{totals}}', totalsText)
+      .replace('{{meals}}', mealsText);
+    
+    // Generate analysis using Gemini AI
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent([{ text: prompt }]);
+    const response = await result.response;
+    const analysis = response.text();
+    
+    res.json({
+      analysis,
+      date,
+      meals_count: meals.length,
+      totals
+    });
+    
+  } catch (error) {
+    console.error('Error generating nutritionist analysis:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate nutritionist analysis',
+      analysis: "⚠️ **Analysis temporarily unavailable** \n\nUnable to generate nutritional insights at the moment. Please try again later."
+    });
+  }
 });
 
 // Get history

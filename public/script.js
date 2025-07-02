@@ -542,7 +542,7 @@ async function handleDeleteMeal(mealId) {
     try {
         await deleteMeal(mealId);
         showMessage('Meal deleted successfully!');
-        await loadTodaysData();
+        await loadTodaysData(); // This already calls loadNutritionistAnalysis()
     } catch (error) {
         console.error('Error deleting meal:', error);
         showMessage('Failed to delete meal. Please try again.', 'error');
@@ -632,9 +632,72 @@ async function loadTodaysData() {
         const data = await getTodaysMeals();
         updateTodaysTotals(data);
         updateMealsList(data.meals);
+        // Load nutritionist analysis after meals are loaded
+        loadNutritionistAnalysis();
     } catch (error) {
         console.error('Error loading today\'s data:', error);
         showMessage('Failed to load today\'s data', 'error');
+    }
+}
+
+// Nutritionist Analysis Functions
+async function getNutritionistAnalysis() {
+    return await apiRequest('/api/nutritionist/today');
+}
+
+async function loadNutritionistAnalysis() {
+    const analysisText = document.getElementById('nutritionist-analysis-text');
+    const loadingEl = document.getElementById('nutritionist-loading');
+    
+    try {
+        // Show loading
+        loadingEl.classList.remove('hidden');
+        analysisText.innerHTML = '';
+        
+        const result = await getNutritionistAnalysis();
+        
+        // Hide loading and show analysis
+        loadingEl.classList.add('hidden');
+        
+        if (result.analysis) {
+            // Convert markdown-style formatting to HTML
+            let formattedAnalysis = result.analysis
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/^- (.*$)/gm, '<li>$1</li>')
+                .replace(/(\n|^)(#{1,3})\s+(.*)/g, (match, prefix, hashes, content) => {
+                    const level = hashes.length;
+                    return `${prefix}<h${level + 2}>${content}</h${level + 2}>`;
+                });
+            
+            // Wrap consecutive list items in ul tags
+            formattedAnalysis = formattedAnalysis.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
+            
+            analysisText.innerHTML = formattedAnalysis;
+        } else {
+            analysisText.innerHTML = '⚠️ No analysis available at the moment.';
+        }
+        
+    } catch (error) {
+        console.error('Error loading nutritionist analysis:', error);
+        loadingEl.classList.add('hidden');
+        analysisText.innerHTML = '⚠️ **Analysis temporarily unavailable** \n\nUnable to generate nutritional insights at the moment. Please try again later.';
+    }
+}
+
+async function refreshNutritionistAnalysis() {
+    const refreshBtn = document.getElementById('refreshAnalysisBtn');
+    if (refreshBtn) {
+        const originalIcon = refreshBtn.querySelector('i');
+        originalIcon.className = 'fas fa-spinner fa-spin';
+        refreshBtn.disabled = true;
+    }
+    
+    await loadNutritionistAnalysis();
+    
+    if (refreshBtn) {
+        const icon = refreshBtn.querySelector('i');
+        icon.className = 'fas fa-sync-alt';
+        refreshBtn.disabled = false;
     }
 }
 
@@ -743,6 +806,12 @@ window.addEventListener('DOMContentLoaded', () => {
     elements.newDayBtn.addEventListener('click', handleNewDay);
     elements.exportBtn.addEventListener('click', handleExportCSV);
     elements.clearHistoryBtn.addEventListener('click', handleClearHistory);
+    
+    // Nutritionist analysis refresh button
+    const refreshAnalysisBtn = document.getElementById('refreshAnalysisBtn');
+    if (refreshAnalysisBtn) {
+        refreshAnalysisBtn.addEventListener('click', refreshNutritionistAnalysis);
+    }
     
     // Enter key support for text input
     elements.mealDescription.addEventListener('keypress', (e) => {
