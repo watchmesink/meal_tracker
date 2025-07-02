@@ -672,6 +672,17 @@ async function loadNutritionistAnalysis() {
             // Wrap consecutive list items in ul tags
             formattedAnalysis = formattedAnalysis.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
             
+            // Add timing context footer if available
+            if (result.timing_context) {
+                const timingInfo = `<div class="analysis-timing">
+                    <small><i class="fas fa-clock"></i> Analysis at ${result.timing_context.current_time} 
+                    ${result.timing_context.last_meal_time !== 'No meals yet' ? 
+                        `• Last meal: ${result.timing_context.last_meal_time}` : ''}
+                    • ${Math.round(result.timing_context.day_progress)}% of day passed</small>
+                </div>`;
+                formattedAnalysis += timingInfo;
+            }
+            
             analysisText.innerHTML = formattedAnalysis;
         } else {
             analysisText.innerHTML = '⚠️ No analysis available at the moment.';

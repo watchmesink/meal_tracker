@@ -1513,6 +1513,24 @@ section h2 {
     margin: 0.25rem 0;
 }
 
+.analysis-timing {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e1e8ff;
+    text-align: center;
+}
+
+.analysis-timing small {
+    color: #86868b;
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.analysis-timing i {
+    color: #007aff;
+    margin-right: 0.25rem;
+}
+
 /* Mobile responsive styling for nutritionist analysis */
 @media (max-width: 600px) {
     .nutritionist-analysis-section {
@@ -1538,6 +1556,16 @@ section h2 {
     .nutritionist-loading {
         padding: 1rem;
         gap: 0.5rem;
+    }
+    
+    .analysis-timing {
+        margin-top: 1rem;
+        padding-top: 0.75rem;
+    }
+    
+    .analysis-timing small {
+        font-size: 0.75rem;
+        line-height: 1.4;
     }
 }
 

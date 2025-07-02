@@ -586,12 +586,54 @@ app.get('/api/nutritionist/today', async (req, res) => {
       });
     });
     
+    // Calculate timing context (used for both no-meals and full analysis)
+    const now = new Date();
+    const currentTime = now.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'America/New_York'
+    });
+    const currentHour = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const dayProgress = Math.round(((currentHour * 60 + currentMinutes) / (24 * 60)) * 100);
+    
+    // Determine day phase
+    let dayPhase;
+    if (currentHour < 11) {
+      dayPhase = `Early Day (${dayProgress}% of day passed) - Morning/Breakfast phase`;
+    } else if (currentHour < 16) {
+      dayPhase = `Mid-Day (${dayProgress}% of day passed) - Lunch/Afternoon phase`;
+    } else if (currentHour < 20) {
+      dayPhase = `Evening (${dayProgress}% of day passed) - Dinner phase`;
+    } else {
+      dayPhase = `Late Night (${dayProgress}% of day passed) - End of day review`;
+    }
+    
     // Skip analysis if no meals
     if (!meals || meals.length === 0) {
+      let noMealsMessage;
+      if (currentHour < 11) {
+        noMealsMessage = "🌅 **Good morning!** No meals logged yet today.\n\nStart your day by logging your breakfast to get personalized nutritional insights and guidance for the day ahead.";
+      } else if (currentHour < 16) {
+        noMealsMessage = "☀️ **It's mid-day** and no meals logged yet!\n\nTime to fuel your body - log your first meal to get nutritional insights and catch up on your daily needs.";
+      } else if (currentHour < 20) {
+        noMealsMessage = "🌆 **Evening check-in** - no meals logged today.\n\nIf you haven't eaten yet, consider logging your meals to track your nutrition and get personalized recommendations.";
+      } else {
+        noMealsMessage = "🌙 **End of day** - no meals were logged today.\n\nTomorrow is a fresh start! Begin logging your meals from breakfast to get nutritional insights throughout the day.";
+      }
+      
       return res.json({
-        analysis: "🍽️ **No meals logged today yet!** \n\nStart your day by logging your first meal to get personalized nutritional insights and recommendations.",
+        analysis: noMealsMessage,
         date,
-        meals_count: 0
+        meals_count: 0,
+        timing_context: {
+          current_time: currentTime,
+          last_meal_time: 'No meals yet',
+          day_progress: dayProgress,
+          day_phase: dayPhase,
+          analysis_generated_at: now.toISOString()
+        }
       });
     }
     
@@ -607,11 +649,23 @@ app.get('/api/nutritionist/today', async (req, res) => {
       return `${index + 1}. ${time} - ${meal.description} (${meal.calories}cal, ${meal.protein}g protein, ${meal.fat}g fat, ${meal.carbs}g carbs, ${meal.fiber}g fiber)`;
     }).join('\n');
     
-    // Prepare the prompt
+    // Find the most recent meal (timing context already calculated above)
+    const lastMeal = meals.length > 0 ? meals[0] : null; // meals are ordered by created_at DESC
+    const lastMealTime = lastMeal && lastMeal.created_at ? 
+      new Date(lastMeal.created_at).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      }) : 'No meals yet';
+    
+    // Prepare the prompt with timing context
     const prompt = nutritionistPrompt
       .replace('{{date}}', date)
       .replace('{{totals}}', totalsText)
-      .replace('{{meals}}', mealsText);
+      .replace('{{meals}}', mealsText)
+      .replace('{{current_time}}', currentTime)
+      .replace('{{last_meal_time}}', lastMealTime)
+      .replace('{{day_progress}}', dayPhase);
     
     // Generate analysis using Gemini AI
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -623,7 +677,14 @@ app.get('/api/nutritionist/today', async (req, res) => {
       analysis,
       date,
       meals_count: meals.length,
-      totals
+      totals,
+      timing_context: {
+        current_time: currentTime,
+        last_meal_time: lastMealTime,
+        day_progress: dayProgress,
+        day_phase: dayPhase,
+        analysis_generated_at: now.toISOString()
+      }
     });
     
   } catch (error) {
