@@ -413,7 +413,7 @@ app.post('/api/meals/unified', upload.array('photos', 10), async (req, res) => {
     console.log('[LOG] Hybrid analysis complete. Result:', JSON.stringify(nutritionData, null, 2));
     
     db.run(`INSERT INTO meals (date, description, calories, protein, fat, carbs, fiber, image_paths, input_method, original_prompt, nutrition_source)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [date, nutritionData.description, nutritionData.calories, nutritionData.protein,
        nutritionData.fat, nutritionData.carbs, nutritionData.fiber, JSON.stringify(imagePaths),
        photos.length > 0 ? 'photo' : 'text', mealDescription, nutritionData.source || 'unknown'],

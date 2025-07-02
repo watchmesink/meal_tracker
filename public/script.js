@@ -760,9 +760,7 @@ function initializeApp() {
 
 // Event Listeners
 window.addEventListener('DOMContentLoaded', () => {
-    // Initialize app directly (no authentication)
-    initializeApp();
-
+    // Initialize elements first
     elements = {
         mealDescription: document.getElementById('mealDescription'),
         addPhotoBtn: document.getElementById('addPhotoBtn'),
@@ -884,6 +882,9 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Initialize app after all elements and event listeners are set up
+    initializeApp();
 });
 
 // Make functions globally available
