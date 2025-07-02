@@ -7,6 +7,7 @@ This guide will help you deploy your meal tracker app to Railway, a modern cloud
 1. **GitHub Account** - Your code should be on GitHub
 2. **Railway Account** - Sign up at [railway.app](https://railway.app)
 3. **Google Gemini API Key** - Get one at [makersuite.google.com](https://makersuite.google.com/app/apikey)
+4. **Google OAuth Credentials** - Follow the [Google OAuth Setup Guide](GOOGLE_OAUTH_SETUP.md)
 
 ## 🚀 Deployment Steps
 
@@ -32,12 +33,17 @@ This guide will help you deploy your meal tracker app to Railway, a modern cloud
 4. **Configure Environment Variables**:
    - Go to your project dashboard
    - Click on the "Variables" tab
-   - Add these variables:
+   - Add these **REQUIRED** variables:
      ```
      GEMINI_API_KEY=your_actual_gemini_api_key
+     GOOGLE_CLIENT_ID=your_google_client_id
+     GOOGLE_CLIENT_SECRET=your_google_client_secret
+     SESSION_SECRET=your_secure_random_session_secret
+     BASE_URL=https://your-app-name.railway.app
      NODE_ENV=production
      ```
    - Railway automatically sets `PORT` for you
+   - ⚠️ **IMPORTANT**: Set `BASE_URL` to your actual Railway app URL
 
 5. **Deploy**:
    - Railway will automatically build and deploy your app
@@ -63,6 +69,10 @@ This guide will help you deploy your meal tracker app to Railway, a modern cloud
 4. **Set environment variables**:
    ```bash
    railway variables:set GEMINI_API_KEY=your_actual_gemini_api_key
+   railway variables:set GOOGLE_CLIENT_ID=your_google_client_id
+   railway variables:set GOOGLE_CLIENT_SECRET=your_google_client_secret
+   railway variables:set SESSION_SECRET=your_secure_random_session_secret
+   railway variables:set BASE_URL=https://your-app-name.railway.app
    railway variables:set NODE_ENV=production
    ```
 
@@ -95,20 +105,27 @@ Railway automatically handles:
 
 ## 🌍 Environment Variables Needed
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `GEMINI_API_KEY` | Google Gemini AI API key | ✅ Yes |
-| `NODE_ENV` | Set to "production" | ✅ Yes |
-| `PORT` | App port (auto-set by Railway) | ⚠️ Auto |
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `GEMINI_API_KEY` | Google Gemini AI API key | ✅ Yes | `AIza...` |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID | ✅ Yes | `123-abc.apps.googleusercontent.com` |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret | ✅ Yes | `GOCSPX-abcdef123` |
+| `SESSION_SECRET` | Secure random string for sessions | ✅ Yes | `your-random-secret` |
+| `BASE_URL` | Your Railway app URL | ✅ Yes | `https://your-app.railway.app` |
+| `NODE_ENV` | Set to "production" | ✅ Yes | `production` |
+| `PORT` | App port (auto-set by Railway) | ⚠️ Auto | `3000` |
 
 ## 🔍 Post-Deployment Testing
 
 After deployment, test these features:
-1. **Add meals** via text description
-2. **Upload photos** of food
-3. **AI analysis** working correctly
-4. **Data persistence** between visits
-5. **Export functionality**
+1. **Google Authentication** - Sign in with Google account
+2. **User isolation** - Data is specific to your user
+3. **Add meals** via text description
+4. **Upload photos** of food
+5. **AI analysis** working correctly
+6. **Data persistence** between visits
+7. **Logout/Login** functionality
+8. **Export functionality**
 
 ## 🐛 Troubleshooting
 
@@ -132,6 +149,12 @@ After deployment, test these features:
 - Check API quota limits
 - Review application logs for API errors
 
+### Authentication Issues
+- Check Google OAuth credentials are correct
+- Verify redirect URIs in Google Console match your Railway URL
+- Ensure `BASE_URL` environment variable is set correctly
+- Follow the [Google OAuth Setup Guide](GOOGLE_OAUTH_SETUP.md)
+
 ## 💰 Railway Pricing
 
 - **Hobby Plan**: $5/month - Perfect for personal projects
@@ -143,6 +166,8 @@ After deployment, test these features:
 - [Railway Documentation](https://docs.railway.app)
 - [Railway CLI Reference](https://docs.railway.app/develop/cli)
 - [Google Gemini API](https://makersuite.google.com)
+- [Google OAuth Setup Guide](GOOGLE_OAUTH_SETUP.md)
+- [Google Cloud Console](https://console.cloud.google.com)
 - [Your GitHub Repository](https://github.com/watchmesink/meal_tracker)
 
 ## 📞 Support
