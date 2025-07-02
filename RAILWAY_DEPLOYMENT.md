@@ -7,7 +7,6 @@ This guide will help you deploy your meal tracker app to Railway, a modern cloud
 1. **GitHub Account** - Your code should be on GitHub
 2. **Railway Account** - Sign up at [railway.app](https://railway.app)
 3. **Google Gemini API Key** - Get one at [makersuite.google.com](https://makersuite.google.com/app/apikey)
-4. **Google OAuth Credentials** - Follow the [Google OAuth Setup Guide](GOOGLE_OAUTH_SETUP.md)
 
 ## 🚀 Deployment Steps
 
@@ -41,31 +40,19 @@ This guide will help you deploy your meal tracker app to Railway, a modern cloud
    - Click on the **"Variables"** tab
    - Add these **REQUIRED** variables **ONE BY ONE**:
    
-   **Step 4a: Add Google OAuth Variables (CRITICAL)**
-   ```
-   Variable Name: GOOGLE_CLIENT_ID
-   Value: your_google_client_id_ending_with_.apps.googleusercontent.com
-   
-   Variable Name: GOOGLE_CLIENT_SECRET  
-   Value: your_google_client_secret_starting_with_GOCSPX-
-   
-   Variable Name: SESSION_SECRET
-   Value: a_random_string_at_least_32_characters_long
-   ```
-   
-   **Step 4b: Add Other Required Variables**
+   **Step 4: Add Required Environment Variable**
    ```
    Variable Name: GEMINI_API_KEY
    Value: your_actual_gemini_api_key_starting_with_AIza
+   ```
    
-   Variable Name: BASE_URL
-   Value: https://your-app-name.railway.app
-   
+   **Optional Variables:**
+   ```
    Variable Name: NODE_ENV
    Value: production
    ```
    
-   ⚠️ **CRITICAL**: Click "Add" after each variable. Railway won't deploy without Google OAuth variables!
+   ⚠️ **IMPORTANT**: Click "Add" after setting the GEMINI_API_KEY variable.
 
 5. **Deploy**:
    - Railway will automatically build and deploy your app
@@ -91,10 +78,6 @@ This guide will help you deploy your meal tracker app to Railway, a modern cloud
 4. **Set environment variables**:
    ```bash
    railway variables:set GEMINI_API_KEY=your_actual_gemini_api_key
-   railway variables:set GOOGLE_CLIENT_ID=your_google_client_id
-   railway variables:set GOOGLE_CLIENT_SECRET=your_google_client_secret
-   railway variables:set SESSION_SECRET=your_secure_random_session_secret
-   railway variables:set BASE_URL=https://your-app-name.railway.app
    railway variables:set NODE_ENV=production
    ```
 
@@ -127,7 +110,7 @@ Railway automatically handles:
 
 ## 🌍 Environment Variables Needed
 
-⚠️ **CRITICAL**: The app will **CRASH ON STARTUP** if Google OAuth environment variables are missing!
+⚠️ **IMPORTANT**: The app requires the GEMINI_API_KEY to function properly.
 
 | Variable | Description | Required | Example |
 |----------|-------------|----------|---------|

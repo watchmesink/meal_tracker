@@ -8,11 +8,7 @@
 console.log('🔍 Checking Meal Tracker Environment Variables...\n');
 
 const requiredVars = [
-  { name: 'GOOGLE_CLIENT_ID', description: 'Google OAuth Client ID', critical: true },
-  { name: 'GOOGLE_CLIENT_SECRET', description: 'Google OAuth Client Secret', critical: true },
-  { name: 'SESSION_SECRET', description: 'Session secret (32+ characters)', critical: true },
-  { name: 'GEMINI_API_KEY', description: 'Google Gemini AI API Key', critical: false },
-  { name: 'BASE_URL', description: 'Base URL for OAuth callbacks', critical: false },
+  { name: 'GEMINI_API_KEY', description: 'Google Gemini AI API Key', critical: true },
 ];
 
 let allGood = true;
@@ -26,14 +22,8 @@ requiredVars.forEach(variable => {
     console.log(`✅ ${variable.name}: Set (${variable.description})`);
     
     // Additional validation
-    if (variable.name === 'SESSION_SECRET' && value.length < 32) {
-      console.log(`   ⚠️  Warning: SESSION_SECRET should be at least 32 characters long (current: ${value.length})`);
-    }
-    if (variable.name === 'GOOGLE_CLIENT_ID' && !value.includes('.apps.googleusercontent.com')) {
-      console.log(`   ⚠️  Warning: GOOGLE_CLIENT_ID should end with .apps.googleusercontent.com`);
-    }
-    if (variable.name === 'GOOGLE_CLIENT_SECRET' && !value.startsWith('GOCSPX-')) {
-      console.log(`   ⚠️  Warning: GOOGLE_CLIENT_SECRET should start with GOCSPX-`);
+    if (variable.name === 'GEMINI_API_KEY' && !value.startsWith('AIza')) {
+      console.log(`   ⚠️  Warning: GEMINI_API_KEY should start with AIza`);
     }
   } else {
     const status = variable.critical ? '❌ MISSING (CRITICAL)' : '⚠️  Missing (Optional)';
@@ -51,10 +41,9 @@ console.log('\n' + '='.repeat(60));
 if (criticalMissing) {
   console.log('❌ DEPLOYMENT WILL FAIL: Critical environment variables are missing!');
   console.log('\n🔧 To fix this:');
-  console.log('1. Create .env file with required variables (see .env.example)');
-  console.log('2. Or set them in Railway Dashboard > Variables tab');
-  console.log('3. Follow GOOGLE_OAUTH_SETUP.md for Google credentials');
-  console.log('\n📄 See RAILWAY_DEPLOYMENT.md for detailed deployment guide');
+  console.log('1. Get your Gemini API key from https://makersuite.google.com/app/apikey');
+  console.log('2. Set GEMINI_API_KEY in Railway Dashboard > Variables tab');
+  console.log('\n📄 See RAILWAY_DEPLOYMENT.md for deployment guide');
   process.exit(1);
 } else if (allGood) {
   console.log('✅ All environment variables are properly configured!');

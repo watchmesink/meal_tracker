@@ -8,10 +8,6 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { v4: uuidv4 } = require('uuid');
 const cron = require('node-cron');
 const foodVectorService = require('./food-vector-service');
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const session = require('express-session');
-const SQLiteStore = require('connect-sqlite3')(session);
 require('dotenv').config();
 
 const app = express();
@@ -47,122 +43,12 @@ try {
 }
 
 // Middleware
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.BASE_URL 
-    : 'http://localhost:3000',
-  credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Session configuration
-app.use(session({
-  store: new SQLiteStore({
-    db: 'sessions.db',
-    table: 'sessions'
-  }),
-  secret: process.env.SESSION_SECRET || 'default-dev-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-  }
-}));
-
-// Passport configuration
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Check Google OAuth environment variables
-console.log('🔍 Checking Google OAuth environment variables...');
-console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing');
-console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? '✅ Set' : '❌ Missing');
-console.log('SESSION_SECRET:', process.env.SESSION_SECRET ? '✅ Set' : '❌ Missing');
-console.log('BASE_URL:', process.env.BASE_URL || 'http://localhost:3000');
-
-if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-  console.error('❌ CRITICAL ERROR: Google OAuth environment variables are missing!');
-  console.error('Required variables:');
-  console.error('- GOOGLE_CLIENT_ID (currently:', process.env.GOOGLE_CLIENT_ID || 'undefined', ')');
-  console.error('- GOOGLE_CLIENT_SECRET (currently:', process.env.GOOGLE_CLIENT_SECRET || 'undefined', ')');
-  console.error('');
-  console.error('🔧 To fix this:');
-  console.error('1. Go to Railway Dashboard > Your Project > Variables');
-  console.error('2. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET');
-  console.error('3. Get these from Google Cloud Console (see GOOGLE_OAUTH_SETUP.md)');
-  console.error('4. Redeploy the application');
-  process.exit(1);
-}
-
-// Google OAuth Strategy
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: `${process.env.BASE_URL || 'http://localhost:3000'}/auth/google/callback`
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    // Check if user exists
-    const user = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM users WHERE google_id = ?', [profile.id], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-
-    if (user) {
-      // Update last login
-      db.run('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
-      return done(null, user);
-    } else {
-      // Create new user
-      const newUser = await new Promise((resolve, reject) => {
-        db.run(`INSERT INTO users (google_id, email, name, picture, created_at) 
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`, 
-               [profile.id, profile.emails[0].value, profile.displayName, profile.photos[0].value],
-               function(err) {
-                 if (err) reject(err);
-                 else {
-                   db.get('SELECT * FROM users WHERE id = ?', [this.lastID], (err, row) => {
-                     if (err) reject(err);
-                     else resolve(row);
-                   });
-                 }
-               });
-      });
-      return done(null, newUser);
-    }
-  } catch (error) {
-    return done(error, null);
-  }
-}));
-
-// Serialize user for session
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-// Deserialize user from session
-passport.deserializeUser((id, done) => {
-  db.get('SELECT * FROM users WHERE id = ?', [id], (err, user) => {
-    done(err, user);
-  });
-});
-
-// Authentication middleware
-const requireAuth = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ error: 'Authentication required' });
-};
-
-// User info middleware
-const addUserInfo = (req, res, next) => {
-  res.locals.user = req.user || null;
-  next();
-};
+// Authentication removed - single user mode
+console.log('ℹ️ Running in single-user mode (no authentication required)');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -206,17 +92,6 @@ const db = new sqlite3.Database('meal_tracker.db');
 
 // Create tables
 db.serialize(() => {
-  // Create users table
-  db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    google_id TEXT UNIQUE NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL,
-    picture TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_login DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
-
   // Check for database migrations
   db.get("PRAGMA table_info(meals)", (err, row) => {
     if (!err && row) {
@@ -230,16 +105,6 @@ db.serialize(() => {
           const hasOriginalPrompt = columns.some(col => col.name === 'original_prompt');
           const hasNutritionSource = columns.some(col => col.name === 'nutrition_source');
           const hasNutritionDetails = columns.some(col => col.name === 'nutrition_details');
-          const hasUserId = columns.some(col => col.name === 'user_id');
-          
-          // Add user_id column if missing
-          if (!hasUserId) {
-            console.log('🔄 Adding user_id column to meals table...');
-            db.run("ALTER TABLE meals ADD COLUMN user_id INTEGER REFERENCES users(id)", (err) => {
-              if (err) console.error('❌ Error adding user_id column:', err);
-              else console.log('✅ Added user_id column to meals table');
-            });
-          }
           
           // Migrate from image_path to image_paths
           if (hasOldColumn && !hasNewColumn) {
@@ -316,28 +181,8 @@ db.serialize(() => {
     }
   });
 
-  // Check for daily_totals table migrations
-  db.get("PRAGMA table_info(daily_totals)", (err, row) => {
-    if (!err && row) {
-      db.all("PRAGMA table_info(daily_totals)", (err, columns) => {
-        if (!err) {
-          const hasUserId = columns.some(col => col.name === 'user_id');
-          
-          if (!hasUserId) {
-            console.log('🔄 Adding user_id column to daily_totals table...');
-            db.run("ALTER TABLE daily_totals ADD COLUMN user_id INTEGER REFERENCES users(id)", (err) => {
-              if (err) console.error('❌ Error adding user_id column to daily_totals:', err);
-              else console.log('✅ Added user_id column to daily_totals table');
-            });
-          }
-        }
-      });
-    }
-  });
-
   db.run(`CREATE TABLE IF NOT EXISTS meals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id),
     date TEXT NOT NULL,
     description TEXT NOT NULL,
     calories REAL DEFAULT 0,
@@ -369,7 +214,6 @@ db.serialize(() => {
 
   db.run(`CREATE TABLE IF NOT EXISTS daily_totals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id),
     date TEXT NOT NULL,
     total_calories REAL DEFAULT 0,
     total_protein REAL DEFAULT 0,
@@ -377,7 +221,7 @@ db.serialize(() => {
     total_carbs REAL DEFAULT 0,
     total_fiber REAL DEFAULT 0,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, date)
+    UNIQUE(date)
   )`);
 });
 
@@ -518,88 +362,33 @@ async function analyzeFoodWithGemini(description, imagePath = null) {
 }
 
 // Helper function to update daily totals
-function updateDailyTotals(userId, date, callback) {
+function updateDailyTotals(date, callback) {
   db.get(`SELECT 
     SUM(calories) as total_calories,
     SUM(protein) as total_protein,
     SUM(fat) as total_fat,
     SUM(carbs) as total_carbs,
     SUM(fiber) as total_fiber
-    FROM meals WHERE user_id = ? AND date = ?`, [userId, date], (err, row) => {
+    FROM meals WHERE date = ?`, [date], (err, row) => {
     if (err) {
       callback(err);
       return;
     }
 
     db.run(`INSERT OR REPLACE INTO daily_totals 
-      (user_id, date, total_calories, total_protein, total_fat, total_carbs, total_fiber, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [userId, date, row.total_calories || 0, row.total_protein || 0, row.total_fat || 0, 
+      (date, total_calories, total_protein, total_fat, total_carbs, total_fiber, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [date, row.total_calories || 0, row.total_protein || 0, row.total_fat || 0, 
        row.total_carbs || 0, row.total_fiber || 0],
       callback
     );
   });
 }
 
-// Authentication Routes
-
-// Google OAuth login
-app.get('/auth/google', passport.authenticate('google', {
-  scope: ['profile', 'email']
-}));
-
-// Google OAuth callback
-app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    // Successful authentication, redirect to main app
-    res.redirect('/');
-  }
-);
-
-// Logout
-app.post('/auth/logout', (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Logout failed' });
-    }
-    res.json({ message: 'Logged out successfully' });
-  });
-});
-
-// Get current user
-app.get('/auth/user', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.json({
-      user: {
-        id: req.user.id,
-        email: req.user.email,
-        name: req.user.name,
-        picture: req.user.picture
-      }
-    });
-  } else {
-    res.status(401).json({ error: 'Not authenticated' });
-  }
-});
-
-// Check authentication status
-app.get('/auth/status', (req, res) => {
-  res.json({ 
-    authenticated: req.isAuthenticated(),
-    user: req.isAuthenticated() ? {
-      id: req.user.id,
-      email: req.user.email,
-      name: req.user.name,
-      picture: req.user.picture
-    } : null
-  });
-});
-
 // API Routes
 
 // Add meal (unified - text and/or multiple photos)
-app.post('/api/meals/unified', requireAuth, upload.array('photos', 10), async (req, res) => {
+app.post('/api/meals/unified', upload.array('photos', 10), async (req, res) => {
   try {
     const { description } = req.body;
     const photos = req.files || [];
@@ -623,9 +412,9 @@ app.post('/api/meals/unified', requireAuth, upload.array('photos', 10), async (r
     const nutritionData = await analyzeFoodWithHybridSearch(mealDescription, primaryImagePath);
     console.log('[LOG] Hybrid analysis complete. Result:', JSON.stringify(nutritionData, null, 2));
     
-    db.run(`INSERT INTO meals (user_id, date, description, calories, protein, fat, carbs, fiber, image_paths, input_method, original_prompt, nutrition_source)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.user.id, date, nutritionData.description, nutritionData.calories, nutritionData.protein,
+    db.run(`INSERT INTO meals (date, description, calories, protein, fat, carbs, fiber, image_paths, input_method, original_prompt, nutrition_source)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [date, nutritionData.description, nutritionData.calories, nutritionData.protein,
        nutritionData.fat, nutritionData.carbs, nutritionData.fiber, JSON.stringify(imagePaths),
        photos.length > 0 ? 'photo' : 'text', mealDescription, nutritionData.source || 'unknown'],
       function(err) {
@@ -637,7 +426,7 @@ app.post('/api/meals/unified', requireAuth, upload.array('photos', 10), async (r
         const mealId = this.lastID;
         console.log(`[SUCCESS] Meal inserted with ID: ${mealId}`);
 
-        updateDailyTotals(req.user.id, date, (err) => {
+        updateDailyTotals(date, (err) => {
           if (err) console.error('[ERROR] Error updating daily totals:', err);
         });
         
@@ -665,7 +454,7 @@ app.post('/api/meals/unified', requireAuth, upload.array('photos', 10), async (r
 });
 
 // Add meal (text description)
-app.post('/api/meals/text', requireAuth, async (req, res) => {
+app.post('/api/meals/text', async (req, res) => {
   try {
     const { description } = req.body;
     const date = getCurrentDate();
@@ -676,16 +465,16 @@ app.post('/api/meals/text', requireAuth, async (req, res) => {
 
     const nutritionData = await analyzeFoodWithHybridSearch(description);
     
-    db.run(`INSERT INTO meals (user_id, date, description, calories, protein, fat, carbs, fiber, image_paths)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.user.id, date, nutritionData.description, nutritionData.calories, nutritionData.protein,
+    db.run(`INSERT INTO meals (date, description, calories, protein, fat, carbs, fiber, image_paths)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [date, nutritionData.description, nutritionData.calories, nutritionData.protein,
        nutritionData.fat, nutritionData.carbs, nutritionData.fiber, JSON.stringify([])],
       function(err) {
         if (err) {
           return res.status(500).json({ error: err.message });
         }
         
-        updateDailyTotals(req.user.id, date, (err) => {
+        updateDailyTotals(date, (err) => {
           if (err) console.error('Error updating daily totals:', err);
         });
         
@@ -703,7 +492,7 @@ app.post('/api/meals/text', requireAuth, async (req, res) => {
 });
 
 // Add meal (photo upload)
-app.post('/api/meals/photo', requireAuth, upload.single('photo'), async (req, res) => {
+app.post('/api/meals/photo', upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Photo is required' });
@@ -715,16 +504,16 @@ app.post('/api/meals/photo', requireAuth, upload.single('photo'), async (req, re
     
     const nutritionData = await analyzeFoodWithHybridSearch(description, imagePath);
     
-    db.run(`INSERT INTO meals (user_id, date, description, calories, protein, fat, carbs, fiber, image_paths)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.user.id, date, nutritionData.description, nutritionData.calories, nutritionData.protein,
+    db.run(`INSERT INTO meals (date, description, calories, protein, fat, carbs, fiber, image_paths)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [date, nutritionData.description, nutritionData.calories, nutritionData.protein,
        nutritionData.fat, nutritionData.carbs, nutritionData.fiber, JSON.stringify([imagePath])],
       function(err) {
         if (err) {
           return res.status(500).json({ error: err.message });
         }
         
-        updateDailyTotals(req.user.id, date, (err) => {
+        updateDailyTotals(date, (err) => {
           if (err) console.error('Error updating daily totals:', err);
         });
         
@@ -742,10 +531,10 @@ app.post('/api/meals/photo', requireAuth, upload.single('photo'), async (req, re
 });
 
 // Get today's meals and totals
-app.get('/api/meals/today', requireAuth, (req, res) => {
+app.get('/api/meals/today', (req, res) => {
   const date = getCurrentDate();
   
-  db.all(`SELECT * FROM meals WHERE user_id = ? AND date = ? ORDER BY created_at DESC`, [req.user.id, date], (err, meals) => {
+  db.all(`SELECT * FROM meals WHERE date = ? ORDER BY created_at DESC`, [date], (err, meals) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -755,7 +544,7 @@ app.get('/api/meals/today', requireAuth, (req, res) => {
       image_paths: meal.image_paths ? JSON.parse(meal.image_paths) : []
     }));
     
-    db.get(`SELECT * FROM daily_totals WHERE user_id = ? AND date = ?`, [req.user.id, date], (err, totals) => {
+    db.get(`SELECT * FROM daily_totals WHERE date = ?`, [date], (err, totals) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
@@ -776,7 +565,7 @@ app.get('/api/meals/today', requireAuth, (req, res) => {
 });
 
 // Get AI nutritionist analysis for today
-app.get('/api/nutritionist/today', requireAuth, async (req, res) => {
+app.get('/api/nutritionist/today', async (req, res) => {
   try {
     const date = getCurrentDate();
     
@@ -785,14 +574,14 @@ app.get('/api/nutritionist/today', requireAuth, async (req, res) => {
     
     // Get today's meals and totals
     const meals = await new Promise((resolve, reject) => {
-      db.all(`SELECT * FROM meals WHERE user_id = ? AND date = ? ORDER BY created_at DESC`, [req.user.id, date], (err, rows) => {
+      db.all(`SELECT * FROM meals WHERE date = ? ORDER BY created_at DESC`, [date], (err, rows) => {
         if (err) reject(err);
         else resolve(rows);
       });
     });
     
     const totals = await new Promise((resolve, reject) => {
-      db.get(`SELECT * FROM daily_totals WHERE user_id = ? AND date = ?`, [req.user.id, date], (err, row) => {
+      db.get(`SELECT * FROM daily_totals WHERE date = ?`, [date], (err, row) => {
         if (err) reject(err);
         else resolve(row || {
           total_calories: 0,
@@ -920,8 +709,8 @@ app.get('/api/nutritionist/today', requireAuth, async (req, res) => {
 });
 
 // Get history
-app.get('/api/history', requireAuth, (req, res) => {
-  db.all(`SELECT * FROM daily_totals WHERE user_id = ? ORDER BY date DESC LIMIT 30`, [req.user.id], (err, rows) => {
+app.get('/api/history', (req, res) => {
+  db.all(`SELECT * FROM daily_totals ORDER BY date DESC LIMIT 30`, [], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -930,10 +719,10 @@ app.get('/api/history', requireAuth, (req, res) => {
 });
 
 // Get meals for specific date
-app.get('/api/meals/:date', requireAuth, (req, res) => {
+app.get('/api/meals/:date', (req, res) => {
   const { date } = req.params;
   
-  db.all(`SELECT * FROM meals WHERE user_id = ? AND date = ? ORDER BY created_at DESC`, [req.user.id, date], (err, meals) => {
+  db.all(`SELECT * FROM meals WHERE date = ? ORDER BY created_at DESC`, [date], (err, meals) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -943,7 +732,7 @@ app.get('/api/meals/:date', requireAuth, (req, res) => {
       image_paths: meal.image_paths ? JSON.parse(meal.image_paths) : []
     }));
     
-    db.get(`SELECT * FROM daily_totals WHERE user_id = ? AND date = ?`, [req.user.id, date], (err, totals) => {
+    db.get(`SELECT * FROM daily_totals WHERE date = ?`, [date], (err, totals) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
@@ -1002,8 +791,8 @@ app.get('/api/scheduler-status', (req, res) => {
 });
 
 // Export CSV
-app.get('/api/export/csv', requireAuth, (req, res) => {
-  db.all(`SELECT * FROM daily_totals WHERE user_id = ? ORDER BY date DESC`, [req.user.id], (err, rows) => {
+app.get('/api/export/csv', (req, res) => {
+  db.all(`SELECT * FROM daily_totals ORDER BY date DESC`, [], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -1020,8 +809,8 @@ app.get('/api/export/csv', requireAuth, (req, res) => {
 });
 
 // Export all meals as CSV
-app.get('/api/export/meals-csv', requireAuth, (req, res) => {
-  db.all(`SELECT * FROM meals WHERE user_id = ? ORDER BY date DESC, created_at DESC`, [req.user.id], (err, rows) => {
+app.get('/api/export/meals-csv', (req, res) => {
+  db.all(`SELECT * FROM meals ORDER BY date DESC, created_at DESC`, [], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -1046,10 +835,10 @@ app.get('/api/export/meals-csv', requireAuth, (req, res) => {
 });
 
 // Delete meal
-app.delete('/api/meals/:id', requireAuth, (req, res) => {
+app.delete('/api/meals/:id', (req, res) => {
   const { id } = req.params;
   
-  db.get(`SELECT date, image_paths FROM meals WHERE id = ? AND user_id = ?`, [id, req.user.id], (err, row) => {
+  db.get(`SELECT date, image_paths FROM meals WHERE id = ?`, [id], (err, row) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -1061,7 +850,7 @@ app.delete('/api/meals/:id', requireAuth, (req, res) => {
     const date = row.date;
     const imagePaths = row.image_paths ? JSON.parse(row.image_paths) : [];
     
-    db.run(`DELETE FROM meals WHERE id = ? AND user_id = ?`, [id, req.user.id], function(err) {
+    db.run(`DELETE FROM meals WHERE id = ?`, [id], function(err) {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
@@ -1078,7 +867,7 @@ app.delete('/api/meals/:id', requireAuth, (req, res) => {
         }
       });
       
-      updateDailyTotals(req.user.id, date, (err) => {
+      updateDailyTotals(date, (err) => {
         if (err) console.error('Error updating daily totals:', err);
       });
       
@@ -1088,15 +877,15 @@ app.delete('/api/meals/:id', requireAuth, (req, res) => {
 });
 
 // Delete all history
-app.delete('/api/history', requireAuth, (req, res) => {
+app.delete('/api/history', (req, res) => {
   db.serialize(() => {
     let mealError, totalError;
 
-    db.run(`DELETE FROM meals WHERE user_id = ?`, [req.user.id], function(err) {
+    db.run(`DELETE FROM meals`, [], function(err) {
       if (err) mealError = err;
     });
 
-    db.run(`DELETE FROM daily_totals WHERE user_id = ?`, [req.user.id], function(err) {
+    db.run(`DELETE FROM daily_totals`, [], function(err) {
       if (err) totalError = err;
     });
 
@@ -1105,13 +894,13 @@ app.delete('/api/history', requireAuth, (req, res) => {
       return res.status(500).json({ error: 'Failed to clear complete history.' });
     }
     
-    console.log(`✅ User ${req.user.id} meal and daily total history has been cleared.`);
+    console.log(`✅ All meal and daily total history has been cleared.`);
     res.json({ message: 'History cleared successfully' });
   });
 });
 
 // Recalculate meal nutrition data
-app.post('/api/meals/:id/recalculate', requireAuth, async (req, res) => {
+app.post('/api/meals/:id/recalculate', async (req, res) => {
   try {
     const { id } = req.params;
     const { newPrompt } = req.body;
@@ -1121,7 +910,7 @@ app.post('/api/meals/:id/recalculate', requireAuth, async (req, res) => {
     }
     
     // Get the existing meal data
-    db.get(`SELECT * FROM meals WHERE id = ? AND user_id = ?`, [id, req.user.id], async (err, meal) => {
+    db.get(`SELECT * FROM meals WHERE id = ?`, [id], async (err, meal) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
@@ -1151,7 +940,7 @@ app.post('/api/meals/:id/recalculate', requireAuth, async (req, res) => {
           }
           
           // Update daily totals
-          updateDailyTotals(req.user.id, meal.date, (err) => {
+          updateDailyTotals(meal.date, (err) => {
             if (err) console.error('Error updating daily totals:', err);
           });
           
@@ -1225,12 +1014,12 @@ console.log(`⏰ Automatic new day scheduler initialized - will trigger at midni
 console.log('Vector service initialization disabled - running in AI-only mode');
 
 // Update meal nutrition and/or image
-app.patch('/api/meals/:id', requireAuth, upload.array('photos', 10), (req, res) => {
+app.patch('/api/meals/:id', upload.array('photos', 10), (req, res) => {
   const { id } = req.params;
   const { calories, protein, fat, carbs, fiber, description } = req.body;
   const photos = req.files || [];
 
-  db.get('SELECT * FROM meals WHERE id = ? AND user_id = ?', [id, req.user.id], (err, meal) => {
+  db.get('SELECT * FROM meals WHERE id = ?', [id], (err, meal) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!meal) return res.status(404).json({ error: 'Meal not found' });
 
@@ -1253,12 +1042,13 @@ app.patch('/api/meals/:id', requireAuth, upload.array('photos', 10), (req, res) 
     if (fields.length === 0) return res.status(400).json({ error: 'No fields to update' });
 
     values.push(id);
-    values.push(req.user.id);
-    const sql = `UPDATE meals SET ${fields.join(', ')} WHERE id = ? AND user_id = ?`;
+    values.push(1);
+    const sql = `UPDATE meals SET ${fields.join(', ')} WHERE id = ?`;
+    values.pop(); // Remove the user_id value
     db.run(sql, values, function(err) {
       if (err) return res.status(500).json({ error: err.message });
       // Update daily totals
-      updateDailyTotals(req.user.id, meal.date, (err) => {
+      updateDailyTotals(meal.date, (err) => {
         if (err) console.error('Error updating daily totals:', err);
       });
       res.json({ message: 'Meal updated successfully' });

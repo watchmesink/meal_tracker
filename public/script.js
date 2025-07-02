@@ -157,8 +157,7 @@ async function apiRequest(url, options = {}) {
         
         // Handle authentication errors
         if (response.status === 401) {
-            showMessage('Please log in to continue', 'error');
-            showLoginSection();
+            showMessage('Authentication error', 'error');
             throw new Error('Authentication required');
         }
         
@@ -751,76 +750,18 @@ async function setVectorDbMode(enabled) {
     } catch (e) { console.error('Failed to set vector DB mode', e); }
 }
 
-// Global variables for authentication
-let currentUser = null;
-
-// Check authentication status on page load
-async function checkAuthenticationStatus() {
-    try {
-        const response = await fetch('/auth/status', {
-            credentials: 'include'
-        });
-        const data = await response.json();
-        
-        if (data.authenticated && data.user) {
-            currentUser = data.user;
-            showMainApp();
-            initializeApp();
-        } else {
-            showLoginSection();
-        }
-    } catch (error) {
-        console.error('Error checking authentication:', error);
-        showLoginSection();
-    }
-}
-
-// Show main app (authenticated state)
-function showMainApp() {
-    document.getElementById('login-section').classList.add('hidden');
-    document.getElementById('main-app').classList.remove('hidden');
-    
-    // Update user info in header
-    if (currentUser) {
-        document.getElementById('userAvatar').src = currentUser.picture || '';
-        document.getElementById('userName').textContent = currentUser.name || '';
-    }
-}
-
-// Show login section (unauthenticated state)
-function showLoginSection() {
-    document.getElementById('login-section').classList.remove('hidden');
-    document.getElementById('main-app').classList.add('hidden');
-}
-
-// Handle logout
-async function handleLogout() {
-    try {
-        await fetch('/auth/logout', {
-            method: 'POST',
-            credentials: 'include'
-        });
-        currentUser = null;
-        showLoginSection();
-        showMessage('Logged out successfully');
-    } catch (error) {
-        console.error('Error logging out:', error);
-        showMessage('Error logging out', 'error');
-    }
-}
-
-// Initialize the main app after authentication
+// Initialize the main app
 function initializeApp() {
-    // Initial data load
-    loadTodaysData();
-    loadHistory();
-    loadGoals();
+  // Initial data load
+  loadTodaysData();
+  loadHistory();
+  loadGoals();
 }
 
 // Event Listeners
 window.addEventListener('DOMContentLoaded', () => {
-    // Check authentication first
-    checkAuthenticationStatus();
+    // Initialize app directly (no authentication)
+    initializeApp();
 
     elements = {
         mealDescription: document.getElementById('mealDescription'),
@@ -896,11 +837,7 @@ window.addEventListener('DOMContentLoaded', () => {
     elements.exportBtn.addEventListener('click', handleExportCSV);
     elements.clearHistoryBtn.addEventListener('click', handleClearHistory);
     
-    // Authentication
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
-    }
+    // Authentication removed - no longer needed
     
     // Nutritionist analysis refresh button
     const refreshAnalysisBtn = document.getElementById('refreshAnalysisBtn');
