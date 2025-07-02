@@ -195,14 +195,14 @@ section h2 {
 
 .meal-description-input {
     flex: 1 1 auto;
-    min-height: 40px;
+    min-height: 50px;
     max-height: 120px;
     border: none;
     outline: none;
     background: #f7f7fa;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     border-radius: 1.5rem;
-    padding: 0.5rem 0.75rem;
+    padding: 0.75rem 1rem;
     resize: vertical;
     overflow-y: auto;
     box-shadow: 0 0 0 2px #dbeafe;
@@ -1094,14 +1094,14 @@ section h2 {
 }
 .meal-description-input {
     flex: 1 1 auto;
-    min-height: 44px;
+    min-height: 54px;
     max-height: 120px;
     border: none;
     outline: none;
     background: #f7f7fa;
-    font-size: 1.15rem;
+    font-size: 0.95rem;
     border-radius: 1.5rem;
-    padding: 0.8rem 1.2rem;
+    padding: 1rem 1.2rem;
     resize: vertical;
     overflow-y: auto;
     box-shadow: 0 0 0 2px #dbeafe;
@@ -1223,9 +1223,9 @@ section h2 {
         border-radius: 8px;
     }
     .meal-edit-form textarea.meal-description-input {
-        font-size: 1rem;
-        min-height: 32px;
-        padding: 0.4rem 0.7rem;
+        font-size: 0.9rem;
+        min-height: 42px;
+        padding: 0.6rem 0.8rem;
         border-radius: 8px;
     }
     .meal-edit-form input[type="number"] {
@@ -1556,8 +1556,8 @@ section h2 {
         min-height: 40px;
     }
     .meal-description-input {
-        font-size: 1rem;
-        min-height: 36px;
-        padding: 0.5rem 0.5rem;
+        font-size: 0.9rem;
+        min-height: 46px;
+        padding: 0.7rem 0.7rem;
     }
 } 
