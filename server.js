@@ -352,12 +352,23 @@ async function analyzeFoodWithGemini(description, imagePath = null) {
     };
   } catch (error) {
     console.error('Error in analyzeFoodWithGemini:', error);
-    return {
-      calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0,
-      description: `(AI Analysis Failed) ${description}`,
-      ingredients: [],
-      source: 'fallback_error'
-    };
+    
+    // Check if it's a quota exceeded error
+    if (error.message && (error.message.includes('429') || error.message.includes('quota'))) {
+      return {
+        calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0,
+        description: `${description} (Notes: Daily AI quota exceeded. Please try again tomorrow or upgrade your API plan.)`,
+        ingredients: [],
+        source: 'quota_exceeded'
+      };
+    } else {
+      return {
+        calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0,
+        description: `(AI Analysis Failed) ${description}`,
+        ingredients: [],
+        source: 'fallback_error'
+      };
+    }
   }
 }
 
@@ -701,10 +712,19 @@ app.get('/api/nutritionist/today', async (req, res) => {
     
   } catch (error) {
     console.error('Error generating nutritionist analysis:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate nutritionist analysis',
-      analysis: "⚠️ **Analysis temporarily unavailable** \n\nUnable to generate nutritional insights at the moment. Please try again later."
-    });
+    
+    // Check if it's a quota exceeded error
+    if (error.message && error.message.includes('429') || error.message.includes('quota')) {
+      res.status(200).json({ 
+        error: 'Quota exceeded',
+        analysis: "📊 **Daily AI Analysis Quota Exceeded** \n\n✅ Your meal was saved successfully!\n\n⏳ The AI nutritionist analysis is temporarily unavailable due to reaching the daily quota limit (50 requests/day for free tier).\n\n🔄 **Options:**\n- Wait until tomorrow for quota reset\n- Upgrade to paid Gemini API plan for higher limits\n- Your nutrition data is still being tracked!\n\n💡 All your meals and totals are working perfectly."
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Failed to generate nutritionist analysis',
+        analysis: "⚠️ **Analysis temporarily unavailable** \n\nUnable to generate nutritional insights at the moment. Please try again later."
+      });
+    }
   }
 });
 
