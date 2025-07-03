@@ -292,7 +292,7 @@ async function analyzeFoodWithHybridSearch(description, imagePath = null) {
 // Helper function to analyze food with Gemini (original function, now as fallback)
 async function analyzeFoodWithGemini(description, imagePath = null) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const prompt = systemPrompt.replace('{{meal_description}}', description);
 
@@ -691,7 +691,7 @@ app.get('/api/nutritionist/today', async (req, res) => {
       .replace('{{day_progress}}', dayPhase);
     
     // Generate analysis using Gemini AI
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent([{ text: prompt }]);
     const response = await result.response;
     const analysis = response.text();
